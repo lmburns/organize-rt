@@ -1,35 +1,41 @@
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::missing_errors_doc)] //Don't have docs
 
-
 use std::path::{PathBuf, Path};
-use std::fs::{create_dir_all, rename, remove_dir_all, canonicalize, File};
-use std::io::{Write, Read};
+use std::fs::{
+    self,
+    create_dir_all,
+    rename,
+    remove_dir_all,
+    canonicalize,
+    File,
+};
+use std::io::{self, Write, Read, BufReader};
 use structopt::StructOpt;
 use serde::{Serialize, Deserialize};
 use walkdir::{WalkDir, DirEntry};
 use indicatif::ProgressBar;
 use regex::{Regex, RegexBuilder};
+use colored::*;
 
 mod default;
-
 
 // --CLI ARGS SECTION--
 #[derive(StructOpt)]
 #[allow(clippy::struct_excessive_bools)] //Allow, because all bools are flags and I need them
-///Tool for organizing files in garbage dirs like 'Downloads'. 
+///Tool for organizing files in garbage dirs like 'Downloads'.
 pub struct Options {
     #[structopt(short, long)]
     pub recursive: bool,
-    
+
     #[structopt(short="H", long)]
     ///Include hidden files/directories
     pub hidden: bool,
-    
+
     #[structopt(short, long)]
     ///Show more info
     pub verbose: bool,
-    
+
     #[structopt(short, long)]
     ///Quiet run, empty output
     pub quiet: bool,
@@ -180,7 +186,7 @@ fn is_hidden(entry: &DirEntry) -> bool {
 
 pub fn create_dirs(options: &Options) -> Result<(), Box<dyn std::error::Error>>{
     options.verbose_print("Creating dirs...");
-    
+
     create_dir_all(Path::new(&(options.output.to_str().unwrap().to_owned() + "/Audio")))?;
     create_dir_all(Path::new(&(options.output.to_str().unwrap().to_owned() + "/Compressed")))?;
     create_dir_all(Path::new(&(options.output.to_str().unwrap().to_owned() + "/Garbage")))?;
@@ -199,11 +205,47 @@ pub fn create_dirs(options: &Options) -> Result<(), Box<dyn std::error::Error>>{
     Ok(())
 }
 
+/// Prompt for user input, returning True if the first character is 'y' or 'Y'
+pub fn prompt_yes<T: AsRef<str>>(prompt: T) -> bool {
+    print!("{} [{}/{}] ", prompt.as_ref(),
+        "y".green().bold(),
+        "N".red().bold()
+    );
+    if io::stdout().flush().is_err() {
+        // If stdout wasn't flushed properly, fallback to println
+        println!("{} [{}/{}]",
+            prompt.as_ref(),
+            "y".green().bold(),
+            "N".red().bold()
+        );
+    }
+    let stdin = BufReader::new(io::stdin());
+    stdin
+        .bytes()
+        .next()
+        .and_then(|c| c.ok())
+        .map(|c| c as char)
+        .map(|c| (c == 'y' || c == 'Y'))
+        .unwrap_or(false)
+}
+
 pub fn move_files(files: &[PathBuf], rules: &CompiledRules, options: &Options) {
     let progressbar = ProgressBar::new(files.len() as u64);
     let mut actions: Vec<Move> = Vec::new();
 
     for (id, file) in files.iter().enumerate() {
+        println!("{} FILE: {:?}", id, file);
+        if fs::symlink_metadata(file).unwrap().file_type().is_symlink() {
+            // Check if the reference exists
+            if !canonicalize(file).is_ok() {
+                if prompt_yes("Remove invalid symlink?") {
+                    fs::remove_file(&file).expect("Symlink");
+                    continue;
+                } else {
+                    continue;
+                }
+            }
+        }
         for (regex, out_dir) in rules.iter() {
             if regex.is_match(&file.file_name().unwrap().to_str().unwrap()) {
                 let mut file_out = out_dir.clone();
@@ -262,7 +304,7 @@ pub fn move_files(files: &[PathBuf], rules: &CompiledRules, options: &Options) {
     }
 }
 
-// --UNDO MAIN SECTION-- 
+// --UNDO MAIN SECTION--
 
 pub fn undo(options: &Options) {
     let mut file = File::open(&options.log_path).unwrap();
@@ -278,9 +320,9 @@ pub fn undo(options: &Options) {
         if options.dry_run {
             options.default_print(format!("{} -> {}", action.to.to_str().unwrap(), action.from.to_str().unwrap()).as_str());
         } else if let Err(e) = rename(&action.to, &action.from) {
-            options.default_print(format!("Failed to move {} back to {} with error '{}' (skipped it)", 
+            options.default_print(format!("Failed to move {} back to {} with error '{}' (skipped it)",
                 action.to.to_str().unwrap(), action.from.to_str().unwrap(), e).as_str());
-            
+
         }
     }
 }

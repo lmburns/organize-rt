@@ -23,3 +23,4 @@ human-panic = "1.0" #Human readable panic
 walkdir = "2" # Nice walkdir lib
 regex = "1" #For regex rules
 indicatif = "0.14.0" #CLI progress bar
+colored = "2.0.0"

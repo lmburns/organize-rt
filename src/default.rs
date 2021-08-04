@@ -1,4 +1,4 @@
-#[allow(clippy::too_many_lines)] 
+#[allow(clippy::too_many_lines)]
 /*
 Allow, because this function just store defaults values.
 A lot of default values
@@ -349,8 +349,8 @@ pub fn rules(rules: &mut Vec<(String, String)>) {
     rules.push((r".*\.TMP$".to_string(), "Garbage".to_string()));
     rules.push((r".*\.LOG$".to_string(), "Garbage".to_string()));
     rules.push((r".*\.TEMP$".to_string(), "Garbage".to_string()));
- 
-    rules.push((r".*\.PART$".to_string(), "Downloads".to_string())); 
+
+    rules.push((r".*\.PART$".to_string(), "Downloads".to_string()));
     rules.push((r".*\.TORRENT$".to_string(), "Downloads".to_string()));
 
     rules.push((r".*\.C$".to_string(), "Code".to_string()));
@@ -449,6 +449,8 @@ pub fn rules(rules: &mut Vec<(String, String)>) {
     rules.push((r".*\.ABC$".to_string(), "Code".to_string()));
     rules.push((r".*\.OCX$".to_string(), "Code".to_string()));
     rules.push((r".*\.SH$".to_string(), "Code".to_string()));
+    rules.push((r".*\.ZSH$".to_string(), "Code".to_string()));
+    rules.push((r".*\.BASH$".to_string(), "Code".to_string()));
     rules.push((r".*\.FLA$".to_string(), "Code".to_string()));
     rules.push((r".*\.FOR$".to_string(), "Code".to_string()));
     rules.push((r".*\.YMP$".to_string(), "Code".to_string()));
@@ -1347,8 +1349,8 @@ pub fn rules(rules: &mut Vec<(String, String)>) {
     rules.push((r".*\.ZT$".to_string(), "Images".to_string()));
 
     rules.push((r".*\.ISO$".to_string(), "ISO".to_string()));
+    rules.push((r".*\.DMG$".to_string(), "DMG".to_string()));
 
-    
     rules.push((r".*\.CFG$".to_string(), "Configuration".to_string()));
     rules.push((r".*\.CONFIG$".to_string(), "Configuration".to_string()));
     rules.push((r".*\.CONF$".to_string(), "Configuration".to_string()));
