@@ -234,10 +234,12 @@ pub fn move_files(files: &[PathBuf], rules: &CompiledRules, options: &Options) {
     let mut actions: Vec<Move> = Vec::new();
 
     for (id, file) in files.iter().enumerate() {
-        println!("{} FILE: {:?}", id, file);
         if fs::symlink_metadata(file).unwrap().file_type().is_symlink() {
             // Check if the reference exists
             if !canonicalize(file).is_ok() {
+                println!("Invalid symlink: {}",
+                    file.display().to_string().bright_red()
+                );
                 if prompt_yes("Remove invalid symlink?") {
                     fs::remove_file(&file).expect("Symlink");
                     continue;
